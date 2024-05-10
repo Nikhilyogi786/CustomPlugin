@@ -41,15 +41,28 @@ class Custom_Plugin
     public function ems_list_employee()
     {
         include_once(EMS_PLUGIN_PATH . "pages/list-employee.php");
-
     }
 }
-register_activation_hook(__FILE__,"ems_create_table");
 
-function ems_create_table(){
+// Instantiate the plugin class
+$custom_plugin = new Custom_Plugin();
+
+// Privacy Notice
+function cp_privacy_notice()
+{
+    echo '<div class="updated"><p>This plugin collects some data to provide its functionality. For more information, please review our <a href="#">privacy policy</a>.</p></div>';
+}
+add_action('admin_notices', 'cp_privacy_notice');
+
+
+register_activation_hook(__FILE__, "ems_create_table");
+
+//Create table
+function ems_create_table()
+{
     global $wpdb;
     $table_prefix = $wpdb->prefix;
-    $sql="
+    $sql = "
     CREATE TABLE {$table_prefix}ems_form_data (
         `id` int NOT NULL AUTO_INCREMENT,
         `name` varchar(120) DEFAULT NULL,
@@ -61,16 +74,90 @@ function ems_create_table(){
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       
     ";
-    include_once ABSPATH. "wp-admin/includes/upgrade.php";
+    include_once ABSPATH . "wp-admin/includes/upgrade.php";
     dbDelta($sql);
 }
-// Instantiate the plugin class
-$custom_plugin = new Custom_Plugin();
 
-// Privacy Notice
-function cp_privacy_notice()
+register_deactivation_hook(__FILE__, "ems_drop_table");
+
+//Drop table hooks
+function ems_drop_table()
 {
-    echo '<div class="updated"><p>This plugin collects some data to provide its functionality. For more information, please review our <a href="#">privacy policy</a>.</p></div>';
+    global $wpdb;
+    $table_prefix = $wpdb->prefix;
+    $sql = "DROP TABLE IF EXISTS {$table_prefix}ems_form_data";
+    $wpdb->query($sql);
 }
-add_action('admin_notices', 'cp_privacy_notice');
-?>
+
+add_action("admin_enqueue_scripts", "ems_add_plugin_assets");
+
+function ems_add_plugin_assets()
+{
+    //Styles css 
+    wp_enqueue_style("ems-bootstrap-css", EMS_PLUGIN_URL . "css/bootstrap.min.css", array(), "1.0.0", "all");
+    wp_enqueue_style("ems-datatable-css", EMS_PLUGIN_URL . "css/dataTables.dataTables.min.css", array(), "1.0.0", "all");
+
+    //Custom css
+    wp_enqueue_style("ems-custom-css", EMS_PLUGIN_URL . "css/custom.css", array(), "1.0.0", "all");
+
+    //Script js
+    wp_enqueue_script("ems-bootstrap-js", EMS_PLUGIN_URL . "js/bootstrap.min.js", array('jquery'), "1.0.0", "all");
+    wp_enqueue_script("ems-datatable-js", EMS_PLUGIN_URL . "js/dataTables.min.js", array('jquery'), "1.0.0", "all");
+    wp_enqueue_script("ems-validate-js", EMS_PLUGIN_URL . "js/jquery.validate.min.js", array('jquery'), "1.0.0", "all");
+
+    //Custom js
+    wp_enqueue_script("ems-custom-js", EMS_PLUGIN_URL . "js/custom.js", array('jquery'), "1.0.0", "all");
+
+    // Localize script with plugin URL
+    wp_localize_script("ems-custom-js", "plugin_data", array("ajax_url" => admin_url("admin-ajax.php"),));
+}
+
+
+add_action('wp_ajax_custom_form_submit', 'custom_form_submit_callback');
+add_action('wp_ajax_nopriv_custom_form_submit', 'custom_form_submit_callback');
+
+function custom_form_submit_callback()
+{
+    if (isset($_POST['formData']) && !empty($_POST['formData'])) {
+        // Parse the URL-encoded string into an associative array
+        parse_str($_POST['formData'], $form_data);
+
+        // Access individual form fields
+        $name = isset($form_data['name']) ? sanitize_text_field($form_data['name']) : '';
+        $email = isset($form_data['email']) ? sanitize_email($form_data['email']) : '';
+        $phoneNo = isset($form_data['phoneNo']) ? sanitize_text_field($form_data['phoneNo']) : '';
+        $gender = isset($form_data['gender']) ? sanitize_text_field($form_data['gender']) : '';
+        $designation = isset($form_data['designation']) ? sanitize_text_field($form_data['designation']) : '';
+
+        // Now you can use the form data as needed
+        // For example, you can insert it into the database
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ems_form_data';
+
+        $wpdb->insert(
+            $table_name,
+            array(
+                'name' => $name,
+                'email' => $email,
+                'phoneNo' => $phoneNo,
+                'gender' => $gender,
+                'designation' => $designation
+            ),
+            array(
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s'
+            )
+        );
+        $the_last_inserted_id = $wpdb->insert_id;
+        if ($the_last_inserted_id > 0) {
+            echo json_encode(array('message' => 'Data received successfully.'));
+        } else {
+            echo json_encode(array('error' => 'Form Data is missing or empty!'));
+        }
+
+    }
+    wp_die();
+}
