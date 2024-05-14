@@ -113,51 +113,86 @@ function ems_add_plugin_assets()
 }
 
 
-add_action('wp_ajax_custom_form_submit', 'custom_form_submit_callback');
-add_action('wp_ajax_nopriv_custom_form_submit', 'custom_form_submit_callback');
+// add_action('wp_ajax_custom_form_submit', 'custom_form_submit_callback');
+// add_action('wp_ajax_nopriv_custom_form_submit', 'custom_form_submit_callback');
 
-function custom_form_submit_callback()
-{
-    if (isset($_POST['formData']) && !empty($_POST['formData'])) {
-        // Parse the URL-encoded string into an associative array
-        parse_str($_POST['formData'], $form_data);
+// function custom_form_submit_callback()
+// {  
+//     if (isset($_POST['formData']) && !empty($_POST['formData'])) {
+//         // Parse the URL-encoded string into an associative array
+//         parse_str($_POST['formData'], $form_data);
 
-        // Access individual form fields
-        $name = isset($form_data['name']) ? sanitize_text_field($form_data['name']) : '';
-        $email = isset($form_data['email']) ? sanitize_email($form_data['email']) : '';
-        $phoneNo = isset($form_data['phoneNo']) ? sanitize_text_field($form_data['phoneNo']) : '';
-        $gender = isset($form_data['gender']) ? sanitize_text_field($form_data['gender']) : '';
-        $designation = isset($form_data['designation']) ? sanitize_text_field($form_data['designation']) : '';
+//         // Access individual form fields
+//         $name = isset($form_data['name']) ? sanitize_text_field($form_data['name']) : '';
+//         $email = isset($form_data['email']) ? sanitize_email($form_data['email']) : '';
+//         $phoneNo = isset($form_data['phoneNo']) ? sanitize_text_field($form_data['phoneNo']) : '';
+//         $gender = isset($form_data['gender']) ? sanitize_text_field($form_data['gender']) : '';
+//         $designation = isset($form_data['designation']) ? sanitize_text_field($form_data['designation']) : '';
 
-        // Now you can use the form data as needed
-        // For example, you can insert it into the database
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'ems_form_data';
+//         // Now you can use the form data as needed
+//         // For example, you can insert it into the database
+        
+//         global $wpdb;
+//         // $table_name = $wpdb->prefix . 'ems_form_data';
 
-        $wpdb->insert(
-            $table_name,
-            array(
-                'name' => $name,
-                'email' => $email,
-                'phoneNo' => $phoneNo,
-                'gender' => $gender,
-                'designation' => $designation
-            ),
-            array(
-                '%s',
-                '%s',
-                '%s',
-                '%s',
-                '%s'
-            )
-        );
-        $the_last_inserted_id = $wpdb->insert_id;
-        if ($the_last_inserted_id > 0) {
-            echo json_encode(array('message' => 'Data received successfully.'));
-        } else {
-            echo json_encode(array('error' => 'Form Data is missing or empty!'));
-        }
+//         // $wpdb->insert(
+//         //     $table_name,
+//         //     array(
+//         //         'name' => $name,
+//         //         'email' => $email,
+//         //         'phoneNo' => $phoneNo,
+//         //         'gender' => $gender,
+//         //         'designation' => $designation
+//         //     ),
+//         //     array(
+//         //         '%s',
+//         //         '%s',
+//         //         '%s',
+//         //         '%s',
+//         //         '%s'
+//         //     )
+//         // );
+//         $the_last_inserted_id = $wpdb->insert_id;
+//         if ($the_last_inserted_id > 0) {
+//             echo json_encode(array('message' => 'Data received successfully.'));
+//         } else {
+//             echo json_encode(array('error' => 'Form Data is missing or empty!'));
+//         }
 
-    }
-    wp_die();
-}
+//     }
+//     wp_die();
+// }
+
+add_action('wp_ajax_get_employee_data', 'get_employee_data_callback');
+add_action('wp_ajax_nopriv_get_employee_data', 'get_employee_data_callback');
+//Array ( [action] => get_employee_data [empId] => 46 [actions] => edit )
+// function get_employee_data_callback(){
+    
+//     global $wpdb;
+//     $empId =$_GET['empId'];
+//     $table_name = $wpdb->prefix . 'ems_form_data';
+
+//     if(isset($_GET['actions']) && isset($_GET['empId'])){
+
+//         if($_GET['actions'] == 'edit'){
+//             $action = 'edit';
+           
+//         }
+
+
+//         if($_GET['actions'] == 'view'){
+//             $action = 'view';
+
+//         }
+//         $employeData = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM  $table_name  WHERE id = %d",$empId),ARRAY_A);
+//         // print_r($employeData);
+//         $response = array(
+//             'employeeData' => $employeData,
+//             'action' => $action
+//         );
+        
+//         echo json_encode($response);
+//         die;
+
+//   }
+// }
